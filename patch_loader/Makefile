@@ -1,8 +1,14 @@
 BUILD_SCRIPTS := $(abspath $(CURDIR)/../buildscripts)
 PATCH_DIR := $(abspath $(CURDIR)/../patch)
 
+BUILD ?= ELF
+
 EE_ASM_DIR = asm/
-EE_BIN = patch_loader.elf
+ifeq ($(BUILD),LIB)
+EE_LIB = libppcpatch.a
+else
+EE_BIN = PPC_PATCH_LOADER.ELF
+endif
 EE_OBJS = patch_loader.o patch.o
 
 EE_LDFLAGS = -L$(PS2SDK)/ee/lib -nostartfiles -lc -lm -lkernel -Wl,-zmax-page-size=128 
