@@ -6,6 +6,7 @@ BUILD ?= ELF
 EE_ASM_DIR = asm/
 ifeq ($(BUILD),LIB)
 EE_LIB = libppcpatch.a
+EE_CFLAGS += -DBUILDING_LIB
 else
 EE_BIN = PPC_PATCH_LOADER.ELF
 endif
