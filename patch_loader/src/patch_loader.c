@@ -22,17 +22,32 @@ extern u32	size_patch_bin;
 #define PATCH_BASE_ADDR   0xBCA14004
 #define PATCH_BRANCH_ADDR (IOP_BASE_ADDR + 0xa07434)
 
-int main()
+#ifdef BUILDING_LIB //library
+#define PRINTF(x...) printf(x)
+#define PRINTF_INIT()
+#define ENTRY() load_patch()
+#else //standalone ELF
+#define PRINTF_INIT() init_scr()
+#define PRINTF(x...) scr_printf(x)
+#define ENTRY() main()
+#endif
+
+int ENTRY()
 {
-	SifInitRpc(0);
-	
+    SifInitRpc(0);
     SifLoadFileInit();
 
     SifIopReset("", 0);
     while (!SifIopSync()) {};
-
-    printf("patch size: 0x%x\n", size_patch_bin);
-
+    PRINTF_INIT();
+    PRINTF("\tPPC Patch loader by qnox32\n"
+           "\tCompiled "__DATE__"\n"
+           "\t\tpatch size: 0x%x\n"
+           "\t\tpatch base address: 0x%x",
+           size_patch_bin,
+           PATCH_BASE_ADDR
+           );
+    PRINTF("\t\tapplying patch...\n");
     DI();               //disable interrupts on EE
     ee_kmode_enter();   //enter kernel mode 
 
@@ -52,17 +67,17 @@ int main()
 
     ee_kmode_exit();
 	EI();
+    DPRINTF("patch applied!\n\t\tOriginal instruction 0x%x\n", original_instr);
+    FlushCache(0);
+    FlushCache(2);
 
-	FlushCache(0);
-	FlushCache(2);
-
+    PRINTF("Rebooting IOP\n");
     //reset IOP to trigger branch / patch
     SifIopReset("", 0);
     while (!SifIopSync()) {};
-
+    PRINTF("Done!\n");
     nanosleep((const struct timespec[]){{2, 0}}, NULL);
 
-    printf("patch_loader complete\n");
     
     return 0;
 }
